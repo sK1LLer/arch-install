@@ -42,7 +42,7 @@ select_root_partition ()
 
 clear && echo "Hello, this script will install Arch with KDE on BTRFS for you"
 
-[-d /sys/firmware/efi ] && env="UEFI" || env="BIOS"
+[ -d /sys/firmware/efi ] && env="UEFI" || env="BIOS"
 
 echo -e "\nYour disks are:"; lsblk -ndo NAME,SIZE | grep -vE "loop0|sr0"
 
