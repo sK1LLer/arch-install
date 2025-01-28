@@ -41,7 +41,9 @@ select_root_partition ()
 }
 
 clear && echo "Hello, this script will install Arch with KDE on BTRFS for you"
-[ -d /sys/firmware/efi ] && echo "system is UEFI" || echo "system is BIOS"
+
+[-d /sys/firmware/efi ] && env="UEFI" || env="BIOS"
+
 echo -e "\nYour disks are:"; lsblk -ndo NAME,SIZE | grep -vE "loop0|sr0"
 
 disks=(); for i in $(lsblk -ndo NAME | grep -vE "loop0|sr0"); do disks+=($i);done
@@ -146,9 +148,12 @@ sed -i "s|BINARIES=(|BINARIES=(btrfs|g" /etc/mkinitcpio.conf
 mkinitcpio -P
 
 #grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
-#grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
 
-grub-install --target=i386-pc /dev/sdX
+[ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$boot_disk_name
+
+#grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
+#grub-install --target=i386-pc /dev/$boot_disk_name
+
 if [[ "$(lspci | grep "VGA compatible controller:")" == *"NVIDIA"* ]]; then
   #pacman -Sy nvidia --noconfirm;
   #sed -i "s|GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia_drm.modeset=1\"|g" /etc/default/grub;
@@ -194,13 +199,13 @@ rm /etc/sudoers_bckp
 sed -i "s|^#\s%wheel ALL=(ALL:ALL) ALL$|%wheel ALL=(ALL:ALL) ALL|g" /etc/sudoers
 sed -i "s|^Current=.*|Current=breeze|" /usr/lib/sddm/sddm.conf.d/default.conf
 
-exit
+#exit
 EOF
 
 chmod +x /mnt/post-chroot.sh
 arch-chroot /mnt /post-chroot.sh
 rm /mnt/post-chroot.sh
-sync
-umount -R /mnt
+#sync
+#umount -R /mnt
 
 else echo "stop"; fi
