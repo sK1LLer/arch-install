@@ -80,7 +80,8 @@ timedatectl set-timezone Europe/Moscow
 echo "timezone set tom Europe/Moscow"
 
 umount -R /mnt 2>/dev/null
-mkfs.vfat -F 32 /dev/$boot_disk_name
+#mkfs.v -F 32 /dev/$boot_disk_name
+mkfs.ext4 /dev/$boot_disk_name
 
 install_btrfs () {
   mkfs.btrfs /dev/$root_disk_name -f
