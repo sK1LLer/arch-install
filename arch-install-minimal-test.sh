@@ -149,7 +149,7 @@ mkinitcpio -P
 
 #grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
 
-[ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$boot_disk_name
+[ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$disk_name
 
 #grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
 #grub-install --target=i386-pc /dev/$boot_disk_name
