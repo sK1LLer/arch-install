@@ -179,7 +179,8 @@ useradd -G wheel -m -s /bin/bash -p '$(openssl passwd -6 "$user_password")' $use
 #LC_ALL=C.UTF-8 xdg-user-dirs-update --force
 
 #pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak pamac-tray-icon-plasma --noconfirm
-pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy libpamac-full pamac-all pamac-tray-icon-plasma --noconfirm
+#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy libpamac-full pamac-all pamac-tray-icon-plasma --noconfirm
+pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak --noconfirm
 sed -i -e "s|^#NoUpdateHideIcon|NoUpdateHideIcon|" -e "s|^RefreshPeriod.*|RefreshPeriod = 3|" -e "s|^#RemoveUnrequiredDeps|RemoveUnrequiredDeps|" -e "s|^#EnableAUR|EnableAUR|" -e "s|^#CheckAURUpdates|CheckAURUpdates|" -e "s|^MaxParallelDownloads.*|MaxParallelDownloads = 10|" /etc/pamac.conf
 echo -e "CheckFlatpakUpdates\n\n#EnableSnap\n\nEnableFlatpak" >> /etc/pamac.conf
 flatpak override --system --filesystem=xdg-config/gtk-3.0:ro
