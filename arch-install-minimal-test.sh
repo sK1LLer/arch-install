@@ -146,8 +146,6 @@ echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$host_name.localdoma
 sed -i "s|MODULES=(|MODULES=(btrfs|g" /etc/mkinitcpio.conf
 sed -i "s|BINARIES=(|BINARIES=(btrfs|g" /etc/mkinitcpio.conf
 
-mkinitcpio -P
-
 #grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
 
 [ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$disk_name
@@ -156,9 +154,9 @@ mkinitcpio -P
 #grub-install --target=i386-pc /dev/$boot_disk_name
 
 if [[ "$(lspci | grep "VGA compatible controller:")" == *"NVIDIA"* ]]; then
-  #pacman -Sy nvidia --noconfirm;
-  #sed -i "s|GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia_drm.modeset=1\"|g" /etc/default/grub;
-  pacman -Sy nvidia-open --noconfirm;
+  sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia-drm.modeset=1 nvidia-drm.fbdev=1\"|g" /etc/default/grub;
+  sed -i "s|^MODULES=(.*|MODULES=(btrfs nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
+  pacman -Sy nvidia-open nvidia-utils --noconfirm;
   systemctl enable nvidia-suspend.service;
   systemctl enable nvidia-hibernate.service;
   systemctl enable nvidia-resume.service;
@@ -172,6 +170,7 @@ fi
 sed -i "s|^#GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|" /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
+mkinitcpio -P
 
 systemctl enable sddm
 systemctl enable NetworkManager
