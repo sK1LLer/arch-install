@@ -80,7 +80,7 @@ timedatectl set-timezone Europe/Moscow
 echo "timezone set tom Europe/Moscow"
 
 umount -R /mnt 2>/dev/null
-#mkfs.v -F 32 /dev/$boot_disk_name
+# mkfs.vfat -F 32 /dev/$boot_disk_name
 mkfs.ext4 /dev/$boot_disk_name
 
 install_btrfs () {
@@ -126,6 +126,7 @@ pacstrap -K /mnt base linux linux-firmware $ucode fwupd networkmanager btrfs-pro
 #xdg-user-dirs
 
 genfstab -U /mnt | sed "s|,subvolid=.*,|,|g" > /mnt/etc/fstab
+
 cat > /mnt/post-chroot.sh << EOF
 sed -i "s|^#ParallelDownloads.*|ParallelDownloads = 10|g" /etc/pacman.conf
 sed -i "s|^#Color|Color|g" /etc/pacman.conf
@@ -154,8 +155,8 @@ sed -i "s|BINARIES=(|BINARIES=(btrfs|g" /etc/mkinitcpio.conf
 #grub-install --target=i386-pc /dev/$boot_disk_name
 
 if [[ "$(lspci | grep "VGA compatible controller:")" == *"NVIDIA"* ]]; then
-  sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia-drm.modeset=1 nvidia-drm.fbdev=1\"|g" /etc/default/grub;
-  sed -i "s|^MODULES=(.*|MODULES=(btrfs nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
+  #sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia-drm.modeset=1 nvidia-drm.fbdev=1\"|g" /etc/default/grub;
+  #sed -i "s|^MODULES=(.*|MODULES=(btrfs nvidia nvidia_modeset nvidia_uvm nvidia_drm)|g" /etc/mkinitcpio.conf
   pacman -Sy nvidia-open nvidia-utils --noconfirm;
   systemctl enable nvidia-suspend.service;
   systemctl enable nvidia-hibernate.service;
@@ -184,9 +185,8 @@ useradd -G wheel -m -s /bin/bash -p '$(openssl passwd -6 "$user_password")' $use
 
 #LC_ALL=C.UTF-8 xdg-user-dirs-update --force
 
-#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak pamac-tray-icon-plasma --noconfirm
-#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy libpamac-full pamac-all pamac-tray-icon-plasma --noconfirm
-#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak --noconfirm
+#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-aur pamac-tray-icon-plasma --noconfirm
+#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-aur --noconfirm
 #sed -i -e "s|^#NoUpdateHideIcon|NoUpdateHideIcon|" -e "s|^RefreshPeriod.*|RefreshPeriod = 3|" -e "s|^#RemoveUnrequiredDeps|RemoveUnrequiredDeps|" -e "s|^#EnableAUR|EnableAUR|" -e "s|^#CheckAURUpdates|CheckAURUpdates|" -e "s|^MaxParallelDownloads.*|MaxParallelDownloads = 10|" /etc/pamac.conf
 #echo -e "CheckFlatpakUpdates\n\n#EnableSnap\n\nEnableFlatpak" >> /etc/pamac.conf
 #flatpak override --system --filesystem=xdg-config/gtk-3.0:ro
