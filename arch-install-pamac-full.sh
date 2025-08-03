@@ -42,6 +42,8 @@ select_root_partition ()
 
 clear && echo "Hello, this script will install Arch with KDE on BTRFS for you"
 
+[ -d /sys/firmware/efi ] && env="UEFI" || env="BIOS"
+
 echo -e "\nYour disks are:"; lsblk -ndo NAME,SIZE | grep -vE "loop0|sr0"
 
 disks=(); for i in $(lsblk -ndo NAME | grep -vE "loop0|sr0"); do disks+=($i);done
@@ -78,7 +80,8 @@ timedatectl set-timezone Europe/Moscow
 echo "timezone set tom Europe/Moscow"
 
 umount -R /mnt 2>/dev/null
-mkfs.vfat -F 32 /dev/$boot_disk_name
+# mkfs.vfat -F 32 /dev/$boot_disk_name
+mkfs.ext4 /dev/$boot_disk_name
 
 install_btrfs () {
   mkfs.btrfs /dev/$root_disk_name -f
@@ -144,14 +147,16 @@ echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$host_name.localdoma
 sed -i "s|MODULES=(|MODULES=(btrfs|g" /etc/mkinitcpio.conf
 sed -i "s|BINARIES=(|BINARIES=(btrfs|g" /etc/mkinitcpio.conf
 
-mkinitcpio -P
-
 #grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
-grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
+
+[ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$disk_name
+
+#grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
+#grub-install --target=i386-pc /dev/$boot_disk_name
+
 if [[ "$(lspci | grep "VGA compatible controller:")" == *"NVIDIA"* ]]; then
-  #pacman -Sy nvidia --noconfirm;
   #sed -i "s|GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia_drm.modeset=1\"|g" /etc/default/grub;
-  pacman -Sy nvidia-open --noconfirm;
+  pacman -Sy nvidia-open nvidia-utils --noconfirm;
   systemctl enable nvidia-suspend.service;
   systemctl enable nvidia-hibernate.service;
   systemctl enable nvidia-resume.service;
@@ -165,6 +170,7 @@ fi
 sed -i "s|^#GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|" /etc/default/grub
 
 grub-mkconfig -o /boot/grub/grub.cfg
+mkinitcpio -P
 
 systemctl enable sddm
 systemctl enable NetworkManager
@@ -178,9 +184,8 @@ useradd -G wheel -m -s /bin/bash -p '$(openssl passwd -6 "$user_password")' $use
 
 #LC_ALL=C.UTF-8 xdg-user-dirs-update --force
 
-#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak pamac-tray-icon-plasma --noconfirm
-#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy libpamac-full pamac-all pamac-tray-icon-plasma --noconfirm
-pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-flatpak --noconfirm
+#pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-aur pamac-tray-icon-plasma --noconfirm
+pacman-key --init && pacman-key --populate && cd /home/$user_name && sudo -u $user_name git clone https://aur.archlinux.org/yay.git && cd yay && sudo -u $user_name makepkg -si --noconfirm && sudo -u $user_name yay -Sy pamac-aur --noconfirm
 sed -i -e "s|^#NoUpdateHideIcon|NoUpdateHideIcon|" -e "s|^RefreshPeriod.*|RefreshPeriod = 3|" -e "s|^#RemoveUnrequiredDeps|RemoveUnrequiredDeps|" -e "s|^#EnableAUR|EnableAUR|" -e "s|^#CheckAURUpdates|CheckAURUpdates|" -e "s|^MaxParallelDownloads.*|MaxParallelDownloads = 10|" /etc/pamac.conf
 echo -e "CheckFlatpakUpdates\n\n#EnableSnap\n\nEnableFlatpak" >> /etc/pamac.conf
 flatpak override --system --filesystem=xdg-config/gtk-3.0:ro
