@@ -42,8 +42,6 @@ select_root_partition ()
 
 clear && echo "Hello, this script will install Arch with KDE on BTRFS for you"
 
-[ -d /sys/firmware/efi ] && env="UEFI" || env="BIOS"
-
 echo -e "\nYour disks are:"; lsblk -ndo NAME,SIZE | grep -vE "loop0|sr0"
 
 disks=(); for i in $(lsblk -ndo NAME | grep -vE "loop0|sr0"); do disks+=($i);done
@@ -80,8 +78,8 @@ timedatectl set-timezone Europe/Moscow
 echo "timezone set tom Europe/Moscow"
 
 umount -R /mnt 2>/dev/null
-# mkfs.vfat -F 32 /dev/$boot_disk_name
-mkfs.ext4 /dev/$boot_disk_name
+mkfs.vfat -F 32 /dev/$boot_disk_name
+#mkfs.ext4 /dev/$boot_disk_name
 
 install_btrfs () {
   mkfs.btrfs /dev/$root_disk_name -f
@@ -122,7 +120,7 @@ pacstrap -K /mnt base linux linux-firmware $ucode fwupd networkmanager btrfs-pro
 #pacstrap -K /mnt base linux linux-firmware $ucode fwupd networkmanager btrfs-progs bash-completion grub efibootmgr reflector sudo nano $plasma_meta sddm konsole dolphin kate os-prober git base-devel
 
 #FULL
-#pacstrap -K /mnt base linux linux-firmware $ucode fwupd networkmanager btrfs-progs bash-completion grub efibootmgr reflector sudo nano $plasma_meta sddm konsole dolphin kate kde-gtk-config flatpak xdg-desktop-portal-gtk base-devel git firefox spectacle gwenview okular ark kcalc partitionmanager os-prober
+#pacstrap -K /mnt base linux linux-firmware $ucode fwupd networkmanager btrfs-progs bash-completion grub efibootmgr reflector sudo nano $plasma_meta sddm konsole dolphin kate kde-gtk-config flatpak xdg-desktop-portal-gtk base-devel git firefox spectacle gwiew okular ark kcalc partitionmanager os-prober
 #xdg-user-dirs
 
 genfstab -U /mnt | sed "s|,subvolid=.*,|,|g" > /mnt/etc/fstab
@@ -147,12 +145,11 @@ echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t$host_name.localdoma
 sed -i "s|MODULES=(|MODULES=(btrfs|g" /etc/mkinitcpio.conf
 sed -i "s|BINARIES=(|BINARIES=(btrfs|g" /etc/mkinitcpio.conf
 
-#grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
-
-[ -d /sys/firmware/efi ] && grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot || grub-install --target=i386-pc /dev/$disk_name
-
-#grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot
-#grub-install --target=i386-pc /dev/$boot_disk_name
+if [ -d /sys/firmware/efi ]; then
+  grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot ;
+else
+  grub-install --target=i386-pc /dev/boot ;
+fi
 
 if [[ "$(lspci | grep "VGA compatible controller:")" == *"NVIDIA"* ]]; then
   #sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 quiet nvidia-drm.modeset=1 nvidia-drm.fbdev=1\"|g" /etc/default/grub;
@@ -204,8 +201,8 @@ EOF
 
 chmod +x /mnt/post-chroot.sh
 arch-chroot /mnt /post-chroot.sh
-rm /mnt/post-chroot.sh
-#sync
+#rm /mnt/post-chroot.sh
+sync
 #umount -R /mnt
 
 else echo "stop"; fi
